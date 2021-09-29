@@ -4,6 +4,7 @@ use std::convert::AsRef;
 
 #[derive(Debug, Copy, Clone, Default)]
 pub struct EthereumNodeRecord {
+    pub seq: u64,
     pub id: IdentityScheme,
     pub secp256k1: CompressedPoint,
     pub ip: Option<[u8; 4]>,
@@ -16,9 +17,13 @@ pub struct EthereumNodeRecord {
 
 impl EthereumNodeRecord {
     pub fn new(point: CompressedPoint) -> Self {
-        let mut enr = Self::default();
-        enr = enr.secp(point);
-        enr
+        let enr = Self::default();
+        enr.seq(1).secp(point)
+    }
+
+    pub fn seq(mut self, seq: u64) -> Self {
+        self.seq = seq;
+        self
     }
 
     pub fn secp(mut self, secp256k1: CompressedPoint) -> Self {
@@ -55,6 +60,10 @@ impl EthereumNodeRecord {
         self.udp6 = Some(udp6);
         self
     }
+
+    pub fn encode(&self) -> String {
+        todo!()
+    }
 }
 
 #[derive(Debug, Copy, Clone, Default)]
@@ -72,7 +81,7 @@ impl std::fmt::Display for IdentityScheme {
 }
 
 impl IdentityScheme {
-    pub fn sign(&self, key: &SigningKey, bytes: impl AsRef<[u8]>) -> Signature {
+    fn sign(&self, key: &SigningKey, bytes: impl AsRef<[u8]>) -> Signature {
         let signature: Signature = match self {
             IdentityScheme::V4 => key.sign(bytes.as_ref()),
         };

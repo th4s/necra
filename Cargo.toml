@@ -7,3 +7,5 @@ edition = "2018"
 
 [dependencies]
 k256 = {version = "0.9", features = ["ecdsa","keccak256"]}
+thiserror = "1"
+log = "0.4"
