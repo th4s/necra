@@ -14,6 +14,49 @@ pub struct EthereumNodeRecord {
     pub udp6: Option<u16>,
 }
 
+impl EthereumNodeRecord {
+    pub fn new(point: CompressedPoint) -> Self {
+        let mut enr = Self::default();
+        enr = enr.secp(point);
+        enr
+    }
+
+    pub fn secp(mut self, secp256k1: CompressedPoint) -> Self {
+        self.secp256k1 = secp256k1;
+        self
+    }
+
+    pub fn ip(mut self, ip: [u8; 4]) -> Self {
+        self.ip = Some(ip);
+        self
+    }
+
+    pub fn tcp(mut self, tcp: u16) -> Self {
+        self.tcp = Some(tcp);
+        self
+    }
+
+    pub fn udp(mut self, udp: u16) -> Self {
+        self.udp = Some(udp);
+        self
+    }
+
+    pub fn ip6(mut self, ip6: [u8; 16]) -> Self {
+        self.ip6 = Some(ip6);
+        self
+    }
+
+    pub fn tcp6(mut self, tcp6: u16) -> Self {
+        self.tcp6 = Some(tcp6);
+        self
+    }
+
+    pub fn udp6(mut self, udp6: u16) -> Self {
+        self.udp6 = Some(udp6);
+        self
+    }
+}
+
 #[derive(Debug, Copy, Clone, Default)]
 pub enum IdentityScheme {
     #[default]
@@ -22,7 +65,9 @@ pub enum IdentityScheme {
 
 impl std::fmt::Display for IdentityScheme {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "v4")
+        match *self {
+            IdentityScheme::V4 => write!(f, "v4"),
+        }
     }
 }
 
