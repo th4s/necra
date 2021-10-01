@@ -22,6 +22,25 @@ impl<'a> std::fmt::Debug for Rlp<'a> {
     }
 }
 
+impl<'a> Rlp<'a> {
+    pub(crate) fn unparse(&self) -> Result<Vec<u8>, RlpError> {
+        match *self {
+            Rlp::Bytes(inner) => {
+                let len = inner.len();
+                if len == 1 && inner[0] < 0x80 {
+                    return Ok(inner.to_vec());
+                }
+                let out = encode_length(len, 0x80)?;
+                out.extend_from_slice(inner);
+                Ok(out)
+            }
+            Rlp::List(inner) => {}
+            Rlp::EmptyList => vec![0xc0],
+            Rlp::Empty => vec![0x80],
+        }
+    }
+}
+
 /// Parse the first rlp match of a slice
 pub(crate) fn parse(rlp_slice: &[u8]) -> Result<(Rlp, &[u8]), RlpError> {
     let len = rlp_slice.len();
@@ -49,6 +68,24 @@ pub(crate) fn parse(rlp_slice: &[u8]) -> Result<(Rlp, &[u8]), RlpError> {
         return Ok((rlp, slice));
     }
     Err(RlpError::NoMatch)
+}
+
+fn encode_length(len: usize, offset: u8) -> Result<Vec<u8>, RlpError> {
+    if len < 56 {
+        return Ok(vec![len as u8 + offset]);
+    } else if len < 256_usize.pow(8) {
+        return Ok(vec![]);
+    } else {
+        Err(RlpError::LongInput)
+    }
+}
+
+fn binary(input: usize, output: &mut Vec<u8>) {
+    output.push((input % 256) as u8);
+    input = input / 256;
+    if input != 0 {
+        binary(input, output);
+    }
 }
 
 fn match_empty(rlp_slice: &[u8]) -> (Option<Rlp>, &[u8]) {
@@ -153,6 +190,8 @@ pub enum RlpError {
     NoMatch,
     #[error("No input left to parse")]
     NoInputLeft,
+    #[error("Input too long")]
+    LongInput,
     #[error("Type conversion error: {0}")]
     Conversion(#[source] NumericError),
 }
