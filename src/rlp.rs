@@ -74,7 +74,11 @@ fn encode_length(len: usize, offset: u8) -> Result<Vec<u8>, RlpError> {
     if len < 56 {
         return Ok(vec![len as u8 + offset]);
     } else if len < 256_usize.pow(8) {
-        return Ok(vec![]);
+        let mut len_prefix = vec![];
+        binary(len, &mut len_prefix);
+        let mut out = vec![len_prefix.len() as u8 + offset + 55];
+        out.extend(&len_prefix);
+        return Ok(out);
     } else {
         Err(RlpError::LongInput)
     }
